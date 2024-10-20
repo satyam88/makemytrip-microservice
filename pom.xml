@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.example</groupId>
 	<artifactId>makemytrip-microservice</artifactId>
-	<version>v5.5.1</version>
+	<version>v5.5.5</version>
 	<name>makemytrip-microservice</name>
 	<packaging>jar</packaging>
 	<description>Demo project for Spring Boot</description>
