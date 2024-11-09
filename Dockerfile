@@ -16,7 +16,7 @@ COPY ./target/makemytrip-microservice*.jar /usr/local/tomcat/webapps
 EXPOSE 8080
 
 # Set the user
-USER fusion
+USER mmt
 
 # Set the working directory
 WORKDIR /usr/local/tomcat/webapps

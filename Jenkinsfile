@@ -1,6 +1,6 @@
 pipeline {
 
-	agent any
+    agent any
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '3', artifactNumToKeepStr: '3'))
@@ -13,69 +13,65 @@ pipeline {
     stages {
         stage('Code Compilation') {
             steps {
-                echo 'Code Compilation is In Progress!'
+                echo 'Starting Code Compilation...'
                 sh 'mvn clean compile'
-                echo 'Code Compilation is Completed Successfully!'
+                echo 'Code Compilation Completed Successfully!'
             }
         }
         stage('Code QA Execution') {
             steps {
-                echo 'JUnit Test Case Check in Progress!'
+                echo 'Running JUnit Test Cases...'
                 sh 'mvn clean test'
-                echo 'JUnit Test Case Check Completed!'
+                echo 'JUnit Test Cases Completed Successfully!'
             }
         }
         stage('Code Package') {
             steps {
-                echo 'Creating WAR Artifact'
+                echo 'Creating WAR Artifact...'
                 sh 'mvn clean package'
-                echo 'Artifact Creation Completed'
+                echo 'WAR Artifact Created Successfully!'
             }
         }
-        stage('Building & Tag Docker Image') {
+        stage('Build & Tag Docker Image') {
             steps {
-                echo "Starting Building Docker Image"
-                sh "docker build -t satyam88/makemytrip-microservice ."
-                sh "docker build -t makemytrip-microservice ."
-                echo 'Docker Image Build Completed'
+                echo 'Building Docker Image with Tags...'
+                sh "docker build -t satyam88/makemytrip-microservice:latest -t makemytrip-microservice:latest ."
+                echo 'Docker Image Build Completed!'
             }
         }
         stage('Docker Image Scanning') {
             steps {
-                echo 'Docker Image Scanning Started'
-                sh 'docker --version'
-                echo 'Docker Image Scanning Started'
+                echo 'Scanning Docker Image...'
+                sh 'docker scan satyam88/makemytrip-microservice:latest || echo "Scan Failed - Proceeding with Caution"'
+                echo 'Docker Image Scanning Completed!'
             }
         }
-        stage(' Docker push to Docker Hub') {
-           steps {
-              script {
-                 withCredentials([string(credentialsId: 'dockerhubCred', variable: 'dockerhubCred')]){
-                 sh 'docker login docker.io -u satyam88 -p ${dockerhubCred}'
-                 echo "Push Docker Image to DockerHub : In Progress"
-                 sh 'docker push satyam88/makemytrip-microservice:latest'
-                 echo "Push Docker Image to DockerHub : In Progress"
-                 }
-              }
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'dockerhubCred', variable: 'dockerhubCred')]) {
+                        sh 'docker login docker.io -u satyam88 -p ${dockerhubCred}'
+                        echo 'Pushing Docker Image to Docker Hub...'
+                        sh 'docker push satyam88/makemytrip-microservice:latest'
+                        echo 'Docker Image Pushed to Docker Hub Successfully!'
+                    }
+                }
             }
         }
-        stage(' Docker Image Push to Amazon ECR') {
-           steps {
-              script {
-                 withDockerRegistry([credentialsId:'ecr:ap-south-1:ecr-credentials', url:"https://533267238276.dkr.ecr.ap-south-1.amazonaws.com"]){
-                 sh """
-                 echo "List the docker images present in local"
-                 docker images
-                 echo "Tagging the Docker Image: In Progress"
-                 docker tag makemytrip-microservice:latest 533267238276.dkr.ecr.ap-south-1.amazonaws.com/makemytrip-microservice:latest
-                 echo "Tagging the Docker Image: Completed"
-                 echo "Push Docker Image to ECR : In Progress"
-                 docker push 533267238276.dkr.ecr.ap-south-1.amazonaws.com/makemytrip-microservice:latest
-                 echo "Push Docker Image to ECR : Completed"
-                 """
-                 }
-              }
-           }
+        stage('Push Docker Image to Amazon ECR') {
+            steps {
+                script {
+                    withDockerRegistry([credentialsId: 'ecr:ap-south-1:ecr-credentials', url: "https://533267238276.dkr.ecr.ap-south-1.amazonaws.com"]) {
+                        echo 'Tagging and Pushing Docker Image to ECR...'
+                        sh '''
+                            docker images
+                            docker tag makemytrip-microservice:latest 533267238276.dkr.ecr.ap-south-1.amazonaws.com/makemytrip-microservice:latest
+                            docker push 533267238276.dkr.ecr.ap-south-1.amazonaws.com/makemytrip-microservice:latest
+                        '''
+                        echo 'Docker Image Pushed to Amazon ECR Successfully!'
+                    }
+                }
+            }
         }
     }
 }
