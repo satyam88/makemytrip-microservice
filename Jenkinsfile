@@ -32,5 +32,50 @@ pipeline {
                 echo 'Artifact Creation Completed'
             }
         }
+        stage('Building & Tag Docker Image') {
+            steps {
+                echo "Starting Building Docker Image"
+                sh "docker build -t satyam88/makemytrip-microservice ."
+                sh "docker build -t makemytrip-microservice ."
+                echo 'Docker Image Build Completed'
+            }
+        }
+        stage('Docker Image Scanning') {
+            steps {
+                echo 'Docker Image Scanning Started'
+                sh 'docker --version'
+                echo 'Docker Image Scanning Started'
+            }
+        }
+        stage(' Docker push to Docker Hub') {
+           steps {
+              script {
+                 withCredentials([string(credentialsId: 'dockerhubCred', variable: 'dockerhubCred')]){
+                 sh 'docker login docker.io -u satyam88 -p ${dockerhubCred}'
+                 echo "Push Docker Image to DockerHub : In Progress"
+                 sh 'docker push satyam88/makemytrip-microservice:latest'
+                 echo "Push Docker Image to DockerHub : In Progress"
+                 }
+              }
+            }
+        }
+        stage(' Docker Image Push to Amazon ECR') {
+           steps {
+              script {
+                 withDockerRegistry([credentialsId:'ecr:ap-south-1:ecr-credentials', url:"https://533267238276.dkr.ecr.ap-south-1.amazonaws.com"]){
+                 sh """
+                 echo "List the docker images present in local"
+                 docker images
+                 echo "Tagging the Docker Image: In Progress"
+                 docker tag makemytrip-microservice:latest 533267238276.dkr.ecr.ap-south-1.amazonaws.com/makemytrip-microservice:latest
+                 echo "Tagging the Docker Image: Completed"
+                 echo "Push Docker Image to ECR : In Progress"
+                 docker push 533267238276.dkr.ecr.ap-south-1.amazonaws.com/makemytrip-microservice:latest
+                 echo "Push Docker Image to ECR : Completed"
+                 """
+                 }
+              }
+           }
+        }
     }
 }
