@@ -73,5 +73,18 @@ pipeline {
                 }
             }
         }
+        stage('Upload Docker Image to Nexus') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                        sh 'docker login http://3.6.37.208:8085/repository/makemytrip-microservice/ -u admin -p ${PASSWORD}'
+                        echo "Push Docker Image to Nexus : In Progress"
+                        sh 'docker tag makemytrip-microservice 3.6.37.208:8085/makemytrip-microservice:latest'
+                        sh 'docker push 3.6.37.208:8085/makemytrip-microservice'
+                        echo "Push Docker Image to Nexus : Completed"
+                    }
+                }
+            }
+        }
     }
 }
